@@ -1,0 +1,19 @@
+manifest:
+  remotes:
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos/
+    - name: rfpros
+      url-base: https://github.com/rfpros
+
+  defaults:
+    remote: rfpros
+    revision: main
+
+  projects:
+    - name: zephyr
+      remote: zephyr
+      revision: v4.3.0
+      import: true
+
+  self:
+    path: dvk_probe
