@@ -38,5 +38,17 @@
                 "kind": "build"
             }
         },
+        {
+            "label": "Flash",
+            "type": "shell",
+            "command": "west flash --runner jlink",
+            "problemMatcher": []
+        },
+        {
+            "label": "menuconfig",
+            "type": "shell",
+            "command": "west build -t menuconfig",
+            "problemMatcher": []
+        },
     ]
 }

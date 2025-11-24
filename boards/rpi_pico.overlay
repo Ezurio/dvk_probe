@@ -1,4 +1,9 @@
 / {
+	chosen {
+		// zephyr,console = &cdc_acm_uart2;
+		// zephyr,shell-uart = &cdc_acm_uart2;
+	};
+
 	uart-bridge0 {
 		compatible = "zephyr,uart-bridge";
 		peers = <&cdc_acm_uart0 &uart0>;
@@ -11,13 +16,39 @@
 };
 
 &pinctrl {
+	uart0_default: uart0_default {
+		group1 {
+			pinmux = <UART0_TX_P0>;
+		};
+		group2 {
+			pinmux = <UART0_RTS_P3>;
+		};
+		group3 {
+			pinmux = <UART0_RX_P1>;
+			input-enable;
+		};
+		group4 {
+			pinmux = <UART0_CTS_P2>;
+			input-enable;
+			bias-pull-down;
+		};
+	};
+
 	uart1_default: uart1_default {
 		group1 {
 			pinmux = <UART1_TX_P4>;
 		};
 		group2 {
+			pinmux = <UART1_RTS_P7>;
+		};
+		group3 {
 			pinmux = <UART1_RX_P5>;
 			input-enable;
+		};
+		group4 {
+			pinmux = <UART1_CTS_P6>;
+			input-enable;
+			bias-pull-down;
 		};
 	};
 };
@@ -32,11 +63,16 @@
 &zephyr_udc0 {
 	cdc_acm_uart0: cdc_acm_uart0 {
 		compatible = "zephyr,cdc-acm-uart";
-		label = "Zephyr USB CDC-ACM uart0";
+		label = "USB CDC-ACM UART0";
 	};
 
 	cdc_acm_uart1: cdc_acm_uart1 {
 		compatible = "zephyr,cdc-acm-uart";
-		label = "Zephyr USB CDC-ACM uart1";
+		label = "USB CDC-ACM UART1";
 	};
+
+	// cdc_acm_uart2: cdc_acm_uart2 {
+	// 	compatible = "zephyr,cdc-acm-uart";
+	// 	label = "USB CDC-ACM UART2";
+	// };
 };

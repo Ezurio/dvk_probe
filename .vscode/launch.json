@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    // Be sure to set cortex-debug.armToolchainPath in user settings.
+    // For example "cortex-debug.armToolchainPath": "/Users/ryan/zephyr-sdk-0.14.2/arm-zephyr-eabi/bin"
+    // If using the Zephyr SDK setting "cortex-debug.armToolchainPrefix": "arm-zephyr-eabi" is required.
+    "configurations": [
+        {
+            "name": "Debug app",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+            "request": "attach",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "device": "RP2040_M0_0",
+            "breakAfterReset": false,
+            "rtos": "Zephyr"
+        },
+    ]
+}
