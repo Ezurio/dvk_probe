@@ -2,7 +2,7 @@
  * Copyright (c) 2023 Nordic Semiconductor ASA
  * Copyright 2025 Ezurio
  *
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: LicenseRef-Ezurio-Clause
  */
 
 #include <stdint.h>
@@ -10,10 +10,13 @@
 #include <zephyr/device.h>
 #include <zephyr/usb/usbd.h>
 #include <zephyr/usb/bos.h>
+#include <zephyr/usb/msos_desc.h>
+#include <cmsis_dap.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(dvk_probe_usbd_config);
 
+#include "msosv2.h"
 
 /* By default, do not register the USB DFU class DFU mode instance. */
 static const char *const blocklist[] = {
@@ -187,6 +190,12 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 		return NULL;
 	}
 #endif
+
+	err = usbd_add_descriptor(&app_usbd, &bos_vreq_msosv2);
+	if (err) {
+		LOG_ERR("Failed to add MSOSv2 capability descriptor");
+		return NULL;
+	}
 
 	return &app_usbd;
 }

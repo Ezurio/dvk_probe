@@ -2,7 +2,7 @@
  * Copyright 2025 Google LLC
  * Copyright 2025 Ezurio
  *
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: LicenseRef-Ezurio-Clause
  */
 
 #include "app_usbd.h"
@@ -13,9 +13,10 @@
 #include <zephyr/drivers/uart/uart_bridge.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
-
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/usbd.h>
+#include <cmsis_dap.h>
+
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(dvk_probe, LOG_LEVEL_INF);
 
@@ -100,6 +101,13 @@ static void usbd_msg_cb(struct usbd_context *const ctx, const struct usbd_msg *m
 int main(void)
 {
 	int err;
+	const struct device *const swd_dev = DEVICE_DT_GET_ONE(zephyr_swdp_gpio);
+
+	err = dap_setup(swd_dev);
+	if (err) {
+		LOG_ERR("Failed to initialize DAP controller, %d", err);
+		return err;
+	}
 
 	app_usbd = app_usbd_init_device(usbd_msg_cb);
 	if (app_usbd == NULL) {

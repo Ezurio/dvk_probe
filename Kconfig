@@ -31,7 +31,6 @@ config APP_USBD_PID
 
 config APP_USBD_SELF_POWERED
 	bool "USB device Self-powered attribute"
-	default y
 	help
 	  Set the Self-powered attribute in the configuration.
 
@@ -42,13 +41,14 @@ config APP_USBD_REMOTE_WAKEUP
 
 config APP_USBD_MAX_POWER
 	int "USB device bMaxPower value"
-	default 125
+	default 250
 	range 0 250
 	help
 	  bMaxPower value in the configuration in 2 mA units.
 
 config APP_USBD_20_EXTENSION_DESC
 	bool "Use default USB 2.0 Extension Descriptor"
+	default y
 	depends on USBD_BOS_SUPPORT
 	help
 	  Set bcdUSB value to 0201 and use default USB 2.0 Extension Descriptor.

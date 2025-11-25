@@ -1,5 +1,6 @@
 / {
 	chosen {
+		// For debug console over USB CDC-ACM
 		// zephyr,console = &cdc_acm_uart2;
 		// zephyr,shell-uart = &cdc_acm_uart2;
 	};
@@ -12,6 +13,15 @@
 	uart-bridge1 {
 		compatible = "zephyr,uart-bridge";
 		peers = <&cdc_acm_uart1 &uart1>;
+	};
+
+	dp0 {
+		compatible = "zephyr,swdp-gpio";
+		status = "okay";
+		clk-gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+		dio-gpios = <&gpio0 12 GPIO_PULL_UP>;
+		reset-gpios = <&gpio0 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+		port-write-cycles = <1>;
 	};
 };
 
@@ -71,8 +81,9 @@
 		label = "USB CDC-ACM UART1";
 	};
 
+	// For debug console over USB CDC-ACM
 	// cdc_acm_uart2: cdc_acm_uart2 {
 	// 	compatible = "zephyr,cdc-acm-uart";
-	// 	label = "USB CDC-ACM UART2";
+	// 	label = "USB CDC-ACM DEBUG";
 	// };
 };

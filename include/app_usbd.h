@@ -2,7 +2,7 @@
  * Copyright (c) 2023 Nordic Semiconductor ASA.
  * Copyright 2025 Ezurio
  *
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier: LicenseRef-Ezurio-Clause
  */
 
 #ifndef APP_USBD_H
