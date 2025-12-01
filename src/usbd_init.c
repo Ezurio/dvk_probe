@@ -197,6 +197,12 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 		return NULL;
 	}
 
+	err = usbd_add_descriptor(&app_usbd, &msos1_os_string_node);
+	if (err) {
+		LOG_ERR("Failed to add MSOSv1 OS String descriptor");
+		return NULL;
+	}
+
 	return &app_usbd;
 }
 
