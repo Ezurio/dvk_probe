@@ -180,10 +180,14 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 		/* doc device init-and-msg end */
 	}
 
-#if CONFIG_APP_USBD_20_EXTENSION_DESC
+	/* Set USB version to 2.01 to enable BOS descriptor support */
 	(void)usbd_device_set_bcd_usb(&app_usbd, USBD_SPEED_FS, 0x0201);
-	(void)usbd_device_set_bcd_usb(&app_usbd, USBD_SPEED_HS, 0x0201);
+	if (USBD_SUPPORTS_HIGH_SPEED &&
+	    usbd_caps_speed(&app_usbd) == USBD_SPEED_HS) {
+		(void)usbd_device_set_bcd_usb(&app_usbd, USBD_SPEED_HS, 0x0201);
+	}
 
+#if CONFIG_APP_USBD_20_EXTENSION_DESC
 	err = usbd_add_descriptor(&app_usbd, &app_usbext);
 	if (err) {
 		LOG_ERR("Failed to add USB 2.0 Extension Descriptor");
@@ -194,12 +198,6 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 	err = usbd_add_descriptor(&app_usbd, &bos_vreq_msosv2);
 	if (err) {
 		LOG_ERR("Failed to add MSOSv2 capability descriptor");
-		return NULL;
-	}
-
-	err = usbd_add_descriptor(&app_usbd, &msos1_os_string_node);
-	if (err) {
-		LOG_ERR("Failed to add MSOSv1 OS String descriptor");
 		return NULL;
 	}
 

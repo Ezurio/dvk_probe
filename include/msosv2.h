@@ -10,18 +10,11 @@
 #define APP_MSOSV2_DESCRIPTOR_H
 
 /*
- * Microsoft OS Descriptors for Windows compatibility.
- * - MSOS v1 for Windows 7 and earlier
- * - MSOS v2 for Windows 8.1 and later
- * See Microsoft OS Descriptors Specification for reference.
+ * Microsoft OS 2.0 Descriptors for Windows 8.1+ compatibility.
+ * See Microsoft OS 2.0 Descriptors Specification for reference.
  */
 
 #define APP_MSOS_VENDOR_CODE 0x14U
-
-/* MSOS v1 definitions (Windows 7) */
-#define MSOS1_STRING_DESCRIPTOR_INDEX 0xEE
-
-/* MSOS v2 definitions (Windows 8.1+) */
 /* Windows version (8.1) */
 #define APP_MSOS2_OS_VERSION 0x06030000UL
 
@@ -50,100 +43,7 @@
 	 sizeof(struct msosv2_guids_property))
 
 /*
- * Microsoft OS 1.0 Extended Compat ID OS Feature Descriptor
- * For Windows 7 compatibility
- */
-struct msos1_compat_id_function {
-	uint8_t bFirstInterfaceNumber;
-	uint8_t reserved1;
-	uint8_t compatibleID[8];
-	uint8_t subCompatibleID[8];
-	uint8_t reserved2[6];
-} __packed;
-
-struct msos1_compat_id_descriptor {
-	uint32_t dwLength;
-	uint16_t bcdVersion;
-	uint16_t wIndex;
-	uint8_t bCount;
-	uint8_t reserved[7];
-	struct msos1_compat_id_function function[CDC_ACM_INSTANCE_COUNT + 1];
-} __packed;
-
-const struct msos1_compat_id_descriptor msos1_compat_id_desc = {
-	.dwLength = sys_cpu_to_le32(sizeof(struct msos1_compat_id_descriptor)),
-	.bcdVersion = sys_cpu_to_le16(0x0100),
-	.wIndex = sys_cpu_to_le16(0x0004),    /* Extended compat ID descriptor */
-	.bCount = CDC_ACM_INSTANCE_COUNT + 1, /* CDC ACM interfaces + DAP interface */
-	.reserved = {0},
-	.function =
-		{
-#if CDC_ACM_INSTANCE_COUNT > 0
-			{
-				.bFirstInterfaceNumber = 0, /* First CDC ACM control interface */
-				.reserved1 = 1,
-				.compatibleID = {0}, /* Use default CDC driver */
-				.subCompatibleID = {0},
-				.reserved2 = {0},
-			},
-#endif
-#if CDC_ACM_INSTANCE_COUNT > 1
-			{
-				.bFirstInterfaceNumber = 2, /* Second CDC ACM control interface */
-				.reserved1 = 1,
-				.compatibleID = {0},
-				.subCompatibleID = {0},
-				.reserved2 = {0},
-			},
-#endif
-#if CDC_ACM_INSTANCE_COUNT > 2
-			{
-				.bFirstInterfaceNumber = 4, /* Third CDC ACM control interface */
-				.reserved1 = 1,
-				.compatibleID = {0},
-				.subCompatibleID = {0},
-				.reserved2 = {0},
-			},
-#endif
-			{
-				.bFirstInterfaceNumber = DAP_INTERFACE_NUMBER,
-				.reserved1 = 1,
-				.compatibleID = {'W', 'I', 'N', 'U', 'S', 'B', 0x00, 0x00},
-				.subCompatibleID = {0},
-				.reserved2 = {0},
-			},
-		},
-};
-
-/* MSOS v1 OS String Descriptor for signaling MSOS support to Windows 7 */
-struct msos1_os_string_descriptor {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint16_t qwSignature[7]; /* "MSFT100" in UTF-16LE */
-	uint8_t bMS_VendorCode;
-	uint8_t bPad;
-} __packed;
-
-const struct msos1_os_string_descriptor msos1_os_string_desc = {
-	.bLength = sizeof(struct msos1_os_string_descriptor),
-	.bDescriptorType = USB_DESC_STRING,
-	.qwSignature =
-		{
-			sys_cpu_to_le16('M'),
-			sys_cpu_to_le16('S'),
-			sys_cpu_to_le16('F'),
-			sys_cpu_to_le16('T'),
-			sys_cpu_to_le16('1'),
-			sys_cpu_to_le16('0'),
-			sys_cpu_to_le16('0'),
-		},
-	.bMS_VendorCode = APP_MSOS_VENDOR_CODE,
-	.bPad = 0,
-};
-
-/*
- * Microsoft OS 2.0 Descriptors
- * For Windows 8.1+ compatibility
+ * Microsoft OS 2.0 Descriptor Set
  */
 struct msosv2_descriptor {
 	struct msosv2_descriptor_set_header header;
@@ -188,16 +88,16 @@ const struct msosv2_descriptor msosv2_desc = {
 		},
 };
 
+/*
+ * Microsoft OS 2.0 Platform Capability Descriptor
+ * Combined structure using Zephyr's standard BOS types
+ */
 struct bos_msosv2_descriptor {
 	struct usb_bos_platform_descriptor platform;
-	struct usb_bos_capability_msos cap;
+	struct usb_bos_capability_msos msos;
 } __packed;
 
 const struct bos_msosv2_descriptor bos_msosv2_desc = {
-	/*
-	 * Microsoft OS 2.0 Platform Capability Descriptor,
-	 * see Microsoft OS 2.0 Descriptors Specification
-	 */
 	.platform =
 		{
 			.bLength = sizeof(struct usb_bos_platform_descriptor) +
@@ -228,50 +128,35 @@ const struct bos_msosv2_descriptor bos_msosv2_desc = {
 					0x9F,
 				},
 		},
-	.cap = {.dwWindowsVersion = sys_cpu_to_le32(APP_MSOS2_OS_VERSION),
-		.wMSOSDescriptorSetTotalLength = sys_cpu_to_le16(sizeof(msosv2_desc)),
-		.bMS_VendorCode = APP_MSOS_VENDOR_CODE,
-		.bAltEnumCode = 0x00},
+	.msos =
+		{
+			.dwWindowsVersion = sys_cpu_to_le32(APP_MSOS2_OS_VERSION),
+			.wMSOSDescriptorSetTotalLength = sys_cpu_to_le16(sizeof(msosv2_desc)),
+			.bMS_VendorCode = APP_MSOS_VENDOR_CODE,
+			.bAltEnumCode = 0x00,
+		},
 };
 
 static int msos_to_host_cb(const struct usbd_context *const ctx,
 			   const struct usb_setup_packet *const setup, struct net_buf *const buf)
 {
-	LOG_INF("Vendor callback to host");
+	uint16_t wIndex = sys_le16_to_cpu(setup->wIndex);
 
-	/* Handle MSOS v1 requests (Windows 7) */
-	if (setup->bRequest == APP_MSOS_VENDOR_CODE && setup->wIndex == 0x0004) {
-		/* Extended Compat ID OS Feature Descriptor */
-		LOG_INF("Get MS OS 1.0 Extended Compat ID Descriptor");
-		net_buf_add_mem(buf, &msos1_compat_id_desc,
-				MIN(net_buf_tailroom(buf), sizeof(msos1_compat_id_desc)));
-		return 0;
-	} else if (setup->bRequest == APP_MSOS_VENDOR_CODE &&
-		   setup->wIndex == MS_OS_20_DESCRIPTOR_INDEX) {
-		/* Handle MSOS v2 requests (Windows 8.1+) */
-		LOG_INF("Get MS OS 2.0 Descriptor Set");
+	LOG_INF("MSOS Vendor callback: bRequest=0x%02x, wIndex=0x%04x", setup->bRequest, wIndex);
+
+	/* Handle MSOS v2 requests (Windows 8.1+) */
+	if (setup->bRequest == APP_MSOS_VENDOR_CODE && wIndex == MS_OS_20_DESCRIPTOR_INDEX) {
+		LOG_INF("Get MS OS 2.0 Descriptor Set (len=%u)", sizeof(msosv2_desc));
 		net_buf_add_mem(buf, &msosv2_desc, MIN(net_buf_tailroom(buf), sizeof(msosv2_desc)));
 		return 0;
 	}
 
+	LOG_WRN("Unsupported MSOS vendor request");
 	return -ENOTSUP;
 }
 
-/* Register MSOS v2 BOS descriptor with vendor request callback (handles both v1 and v2) */
+/* Register MSOS v2 BOS descriptor with vendor request callback */
 USBD_DESC_BOS_VREQ_DEFINE(bos_vreq_msosv2, sizeof(bos_msosv2_desc), &bos_msosv2_desc,
 			  APP_MSOS_VENDOR_CODE, msos_to_host_cb, NULL);
-
-/* MSOS v1 OS String Descriptor node for Windows 7 support */
-struct usbd_desc_node msos1_os_string_node = {
-	.str =
-		{
-			.idx = MSOS1_STRING_DESCRIPTOR_INDEX,
-			/* Reuse interface type for special string */
-			.utype = USBD_DUT_STRING_INTERFACE,
-		},
-	.ptr = &msos1_os_string_desc,
-	.bLength = sizeof(msos1_os_string_desc),
-	.bDescriptorType = USB_DESC_STRING,
-};
 
 #endif /* APP_MSOSV2_DESCRIPTOR_H */
