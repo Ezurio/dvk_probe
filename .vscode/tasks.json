@@ -24,7 +24,7 @@
         {
             "label": "Rebuild",
             "type": "shell",
-            "command": "west build -p -b rpi_pico",
+            "command": "west build -p -b rpi_pico ${input:build_options}",
             "problemMatcher": [
                 "$cmake",
                 "$kconfig",
@@ -49,6 +49,18 @@
             "type": "shell",
             "command": "west build -t menuconfig",
             "problemMatcher": []
+        },
+    ],
+    "inputs": [
+        {
+            "id": "build_options",
+            "description": "Build options",
+            "default": "",
+            "type": "pickString",
+            "options": [
+                "",
+                "-- -DCONFIG_APP_DEBUG=y"
+            ]
         },
     ]
 }

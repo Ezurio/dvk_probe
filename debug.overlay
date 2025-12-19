@@ -1,0 +1,14 @@
+/ {
+	chosen {
+		// For debug console over USB CDC-ACM
+		zephyr,console = &cdc_acm_uart2;
+		zephyr,shell-uart = &cdc_acm_uart2;
+	};
+};
+
+&zephyr_udc0 {
+	cdc_acm_uart2: cdc_acm_uart2 {
+		compatible = "zephyr,cdc-acm-uart";
+		label = "DVK Probe DEBUG";
+	};
+};

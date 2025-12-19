@@ -1,10 +1,4 @@
 / {
-	chosen {
-		// For debug console over USB CDC-ACM
-		// zephyr,console = &cdc_acm_uart2;
-		// zephyr,shell-uart = &cdc_acm_uart2;
-	};
-
 	uart-bridge0 {
 		compatible = "zephyr,uart-bridge";
 		peers = <&cdc_acm_uart0 &uart0>;
@@ -80,10 +74,4 @@
 		compatible = "zephyr,cdc-acm-uart";
 		label = "USB CDC-ACM UART1";
 	};
-
-	// For debug console over USB CDC-ACM
-	// cdc_acm_uart2: cdc_acm_uart2 {
-	// 	compatible = "zephyr,cdc-acm-uart";
-	// 	label = "USB CDC-ACM DEBUG";
-	// };
 };

@@ -1,7 +1,13 @@
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-Ezurio-Clause
 
 cmake_minimum_required(VERSION 3.20.0)
-find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+
+if(CONFIG_APP_DEBUG)
+  set(EXTRA_CONF_FILE ${CMAKE_CURRENT_LIST_DIR}/debug.conf)
+  set(EXTRA_DTC_OVERLAY_FILE ${CMAKE_CURRENT_LIST_DIR}/debug.overlay)
+endif()
+
+find_package(Zephyr REQUIRED HINTS)
 
 project(dvk_probe)
 

@@ -1,6 +1,6 @@
 # Copyright 2025 Google LLC
 # Copyright 2025 Ezurio
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-Ezurio-Clause
 
 menu "DVK Probe options"
 	depends on USB_DEVICE_STACK_NEXT
@@ -52,6 +52,12 @@ config APP_USBD_20_EXTENSION_DESC
 	depends on USBD_BOS_SUPPORT
 	help
 	  Set bcdUSB value to 0201 and use default USB 2.0 Extension Descriptor.
+
+config APP_DEBUG
+	bool "Enable debug logs"
+	help
+	  Enable debug logs for DVK Probe application.
+	  This will add a USB CDC ACM port for debug logs.
 
 endmenu
 
