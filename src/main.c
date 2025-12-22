@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <zephyr/drivers/uart/uart_bridge.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/usb/usb_device.h>
@@ -17,6 +16,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(dvk_probe, LOG_LEVEL_INF);
 
+#include "uart_bridge.h"
 #include "app_usbd.h"
 #include "led.h"
 
@@ -27,7 +27,7 @@ static struct usbd_context *app_usbd;
 static const struct device *const swd_dev = DEVICE_DT_GET_ONE(zephyr_swdp_gpio);
 
 static const struct device *uart_bridges[] = {
-	DT_FOREACH_STATUS_OKAY(zephyr_uart_bridge, DEVICE_DT_GET_COMMA)};
+	DT_FOREACH_STATUS_OKAY(rfpros_uart_bridge, DEVICE_DT_GET_COMMA)};
 
 ZBUS_CHAN_DECLARE(led_chan);
 ZBUS_SUBSCRIBER_DEFINE(led_sub, 8);
@@ -162,6 +162,7 @@ int main(void)
 		if (err == 0) {
 			led_do_action(&msg_led_action);
 		}
+		k_sleep(K_MSEC(1));
 		k_yield();
 	}
 	return 0;

@@ -4,6 +4,8 @@
 
 menu "DVK Probe options"
 	depends on USB_DEVICE_STACK_NEXT
+	depends on UART_INTERRUPT_DRIVEN
+	depends on RING_BUFFER
 
 config APP_USBD_MANUFACTURER
 	string "USB device manufacturer string"
@@ -58,6 +60,12 @@ config APP_DEBUG
 	help
 	  Enable debug logs for DVK Probe application.
 	  This will add a USB CDC ACM port for debug logs.
+
+config RFPROS_UART_BRIDGE_BUF_SIZE
+	int "UART bridge buffer size"
+	default 256
+	help
+	  Set the buffer size for the UART bridge.
 
 endmenu
 

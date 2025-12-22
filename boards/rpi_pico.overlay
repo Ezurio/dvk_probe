@@ -2,12 +2,12 @@
 
 / {
 	uart-bridge0 {
-		compatible = "zephyr,uart-bridge";
+		compatible = "rfpros_uart_bridge";
 		peers = <&cdc_acm_uart0 &uart0>;
 	};
 
 	uart-bridge1 {
-		compatible = "zephyr,uart-bridge";
+		compatible = "rfpros_uart_bridge";
 		peers = <&cdc_acm_uart1 &uart1>;
 	};
 

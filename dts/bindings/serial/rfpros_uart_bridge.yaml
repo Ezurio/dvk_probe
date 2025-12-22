@@ -1,0 +1,26 @@
+# Copyright 2025 Google LLC
+# Copyright 2025 Ezurio
+# SPDX-License-Identifier: LicenseRef-Ezurio-Clause
+
+title: UART bridge
+
+description: |
+  Bridges data between two serial devices, for example a USB CDC-ACM serial
+  port and an hardware UART.
+
+  The device node must specify exactly two peer phandles for the two serial
+  devices to be bridged together. Example configuration:
+
+  uart-bridge {
+           compatible = "rfpros_uart_bridge";
+           peers = <&cdc_acm_uart0 &uart1>;
+  };
+
+include: base.yaml
+
+compatible: "rfpros_uart_bridge"
+
+properties:
+  peers:
+    type: phandles
+    description: Peer device nodes, must contain two phandles
