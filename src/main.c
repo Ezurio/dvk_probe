@@ -5,11 +5,8 @@
  * SPDX-License-Identifier: LicenseRef-Ezurio-Clause
  */
 
-#include "app_usbd.h"
-
 #include <stdio.h>
 #include <string.h>
-#include <zephyr/device.h>
 #include <zephyr/drivers/uart/uart_bridge.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
@@ -20,12 +17,20 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(dvk_probe, LOG_LEVEL_INF);
 
+#include "app_usbd.h"
+#include "led.h"
+
 static struct usbd_context *app_usbd;
 
 #define DEVICE_DT_GET_COMMA(node_id) DEVICE_DT_GET(node_id),
 
-const struct device *uart_bridges[] = {
+static const struct device *const swd_dev = DEVICE_DT_GET_ONE(zephyr_swdp_gpio);
+
+static const struct device *uart_bridges[] = {
 	DT_FOREACH_STATUS_OKAY(zephyr_uart_bridge, DEVICE_DT_GET_COMMA)};
+
+ZBUS_CHAN_DECLARE(led_chan);
+ZBUS_SUBSCRIBER_DEFINE(led_sub, 8);
 
 static void usbd_msg_cb(struct usbd_context *const ctx, const struct usbd_msg *msg)
 {
@@ -101,7 +106,20 @@ static void usbd_msg_cb(struct usbd_context *const ctx, const struct usbd_msg *m
 int main(void)
 {
 	int err;
-	const struct device *const swd_dev = DEVICE_DT_GET_ONE(zephyr_swdp_gpio);
+	led_action_t led_boot_action = {
+		.dev = led_strip,
+		.color = LED_WHITE,
+		.on_time_ms = LED_FLASH_TIME_MS,
+		.off_time_ms = LED_FLASH_TIME_MS,
+		.repeat_count = 2,
+	};
+	led_action_t msg_led_action;
+	const struct zbus_channel *chan;
+
+	if (!device_is_ready(led_strip)) {
+		LOG_ERR("LED strip device %s is not ready", led_strip->name);
+		return -ENODEV;
+	}
 
 	err = dap_setup(swd_dev);
 	if (err) {
@@ -125,7 +143,26 @@ int main(void)
 
 	LOG_INF("USB device support enabled");
 
-	k_sleep(K_FOREVER);
+	/* Flash LED to indicate boot */
+	led_send_action(&led_boot_action);
 
+	/* Main loop to process LED actions */
+	while (1) {
+		err = zbus_sub_wait(&led_sub, &chan, K_FOREVER);
+		if (err) {
+			LOG_ERR("Failed to wait for LED action: %d", err);
+			k_yield();
+			continue;
+		}
+		if (chan != &led_chan) {
+			k_yield();
+			continue;
+		}
+		err = zbus_chan_read(&led_chan, &msg_led_action, K_FOREVER);
+		if (err == 0) {
+			led_do_action(&msg_led_action);
+		}
+		k_yield();
+	}
 	return 0;
 }
