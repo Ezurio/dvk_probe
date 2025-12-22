@@ -14,7 +14,7 @@
 #include <cmsis_dap.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(dvk_probe, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(dvk_probe, CONFIG_DVK_PROBE_LOG_LEVEL);
 
 #include "uart_bridge.h"
 #include "app_usbd.h"
@@ -40,7 +40,7 @@ static void usbd_msg_cb(struct usbd_context *const ctx, const struct usbd_msg *m
 	int ret;
 	struct uart_config peer_cfg;
 
-	LOG_INF("USBD message: %s", usbd_msg_type_string(msg->type));
+	LOG_DBG("USBD message: %s", usbd_msg_type_string(msg->type));
 
 	if (usbd_can_detect_vbus(ctx)) {
 		if (msg->type == USBD_MSG_VBUS_READY) {

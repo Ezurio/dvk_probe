@@ -34,6 +34,7 @@
 #define LED_OFF    LED_RGB(0, 0, 0)
 
 #define LED_FLASH_TIME_MS 30
+#define LED_FLASH_FAST_TIME_MS 10
 
 typedef struct led_action {
 	const struct device *dev;
@@ -44,6 +45,8 @@ typedef struct led_action {
 } led_action_t;
 
 extern const struct device *const led_strip;
+extern const led_action_t LED_BLUE_FLASH;
+extern const led_action_t LED_RED_FLASH;
 
 /**
  * @brief Send LED action to LED handler

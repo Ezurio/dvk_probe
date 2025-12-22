@@ -13,6 +13,7 @@
 #include <zephyr/pm/device.h>
 
 #include "uart_bridge.h"
+#include "led.h"
 
 #define DT_DRV_COMPAT rfpros_uart_bridge
 LOG_MODULE_REGISTER(uart_bridge, CONFIG_UART_LOG_LEVEL);
@@ -89,6 +90,16 @@ static uint8_t uart_bridge_get_idx(const struct device *dev, const struct device
 	}
 }
 
+static void uart_bridge_flash_led(const struct device *dev)
+{
+	/* Flash LED to indicate activity */
+	if (strstr(dev->name, "UART0") != NULL) {
+		led_send_action((led_action_t *)&LED_BLUE_FLASH);
+	} else if (strstr(dev->name, "UART1") != NULL) {
+		led_send_action((led_action_t *)&LED_RED_FLASH);
+	}
+}
+
 static void uart_bridge_handle_rx(const struct device *dev, const struct device *bridge_dev)
 {
 	const struct uart_bridge_config *cfg = bridge_dev->config;
@@ -122,6 +133,7 @@ static void uart_bridge_handle_rx(const struct device *dev, const struct device 
 		return;
 	} else {
 		LOG_DBG("%s: received %d bytes", dev->name, recv_len);
+		uart_bridge_flash_led(dev);
 	}
 
 	ret = ring_buf_put_finish(&own_data->rb, recv_len);

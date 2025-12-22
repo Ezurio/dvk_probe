@@ -14,7 +14,7 @@
 #include <cmsis_dap.h>
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(dvk_probe_usbd_config);
+LOG_MODULE_REGISTER(dvk_probe_usbd_config, CONFIG_DVK_PROBE_LOG_LEVEL);
 
 #include "msosv2.h"
 

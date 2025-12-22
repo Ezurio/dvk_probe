@@ -5,7 +5,7 @@
  */
 
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(app_led, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(app_led, CONFIG_DVK_PROBE_LOG_LEVEL);
 
 #include "led.h"
 
@@ -20,6 +20,22 @@ ZBUS_CHAN_DEFINE(led_chan,                /* Name */
 			       .repeat_count = 0) /* Initial value */
 );
 
+const led_action_t LED_BLUE_FLASH = {
+	.dev = led_strip,
+	.color = LED_BLUE,
+	.on_time_ms = LED_FLASH_FAST_TIME_MS,
+	.off_time_ms = 0,
+	.repeat_count = 0,
+};
+
+const led_action_t LED_RED_FLASH = {
+	.dev = led_strip,
+	.color = LED_RED,
+	.on_time_ms = LED_FLASH_FAST_TIME_MS,
+	.off_time_ms = 0,
+	.repeat_count = 0,
+};
+
 int led_send_action(led_action_t *action)
 {
 	int ret;
@@ -29,10 +45,8 @@ int led_send_action(led_action_t *action)
 	}
 
 	ret = zbus_chan_pub(&led_chan, action, K_NO_WAIT);
-	if (ret != 0) {
-		LOG_ERR("Failed to publish LED action: %d", ret);
-	} else {
-		LOG_INF("Published LED Action: Color R:%d G:%d B:%d On:%d Off:%d Repeat:%d",
+	if (ret == 0) {
+		LOG_DBG("Published LED Action: Color R:%d G:%d B:%d On:%d Off:%d Repeat:%d",
 			action->color.r, action->color.g, action->color.b, action->on_time_ms,
 			action->off_time_ms, action->repeat_count);
 	}
@@ -45,9 +59,6 @@ int led_do_action(led_action_t *action)
 	int ret;
 	int repeat = 0;
 	struct led_rgb off_color = LED_OFF;
-	LOG_INF("Run LED Action: Color R:%d G:%d B:%d On:%d Off:%d Repeat:%d", action->color.r,
-		action->color.g, action->color.b, action->on_time_ms, action->off_time_ms,
-		action->repeat_count);
 
 	if (action == NULL) {
 		return -EINVAL;
@@ -56,6 +67,10 @@ int led_do_action(led_action_t *action)
 	if (action->dev == NULL) {
 		return -EINVAL;
 	}
+
+	LOG_DBG("Run LED Action: Color R:%d G:%d B:%d On:%d Off:%d Repeat:%d", action->color.r,
+		action->color.g, action->color.b, action->on_time_ms, action->off_time_ms,
+		action->repeat_count);
 
 	do {
 		/* Set LED to desired color */

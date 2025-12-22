@@ -7,6 +7,11 @@ menu "DVK Probe options"
 	depends on UART_INTERRUPT_DRIVEN
 	depends on RING_BUFFER
 
+module=DVK_PROBE
+module-dep=LOG
+module-str=Log level
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+
 config APP_USBD_MANUFACTURER
 	string "USB device manufacturer string"
 	default "Ezurio"
