@@ -36,6 +36,7 @@
 		group3 {
 			pinmux = <UART0_RX_P1>;
 			input-enable;
+			bias-pull-up;
 		};
 		group4 {
 			pinmux = <UART0_CTS_P2>;
@@ -54,6 +55,7 @@
 		group3 {
 			pinmux = <UART1_RX_P5>;
 			input-enable;
+			bias-pull-up;
 		};
 		group4 {
 			pinmux = <UART1_CTS_P6>;
