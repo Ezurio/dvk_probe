@@ -23,6 +23,50 @@
 	aliases {
 		ledstrip0 = &ws2812;
 	};
+
+	gpio_dynamic {
+		compatible = "gpio-dynamic";
+		gpio0 {
+		   gpios = <&gpio0 16 0>;
+		   label = "gpio0";
+		};
+		gpio1 {
+		   gpios = <&gpio0 17 0>;
+		   label = "gpio1";
+		};
+		gpio2 {
+		   gpios = <&gpio0 18 0>;
+		   label = "gpio2";
+		};
+		gpio3 {
+		   gpios = <&gpio0 19 0>;
+		   label = "gpio3";
+		};
+		gpio4 {
+		   gpios = <&gpio0 20 0>;
+		   label = "gpio4";
+		};
+		gpio5 {
+		   gpios = <&gpio0 21 0>;
+		   label = "gpio5";
+		};
+		gpio6 {
+		   gpios = <&gpio0 25 0>;
+		   label = "gpio6";
+		};
+		gpio7 {
+		   gpios = <&gpio0 26 0>;
+		   label = "gpio7";
+		};
+		gpio8 {
+		   gpios = <&gpio0 27 0>;
+		   label = "gpio8";
+		};
+		gpio9 {
+		   gpios = <&gpio0 28 0>;
+		   label = "gpio9";
+		};
+	 };
 };
 
 &pinctrl {

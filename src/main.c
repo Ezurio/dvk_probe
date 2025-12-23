@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/usbd.h>
@@ -28,6 +29,16 @@ static const struct device *const swd_dev = DEVICE_DT_GET_ONE(zephyr_swdp_gpio);
 
 static const struct device *uart_bridges[] = {
 	DT_FOREACH_STATUS_OKAY(rfpros_uart_bridge, DEVICE_DT_GET_COMMA)};
+
+// Get the node ID of gpio_dynamic
+#define GPIO_DYNAMIC_NODE DT_PATH(gpio_dynamic)
+
+// Macro to extract gpio_dt_spec from a child node
+#define GPIO_SPEC_FROM_CHILD(child_node) GPIO_DT_SPEC_GET_BY_IDX(child_node, gpios, 0),
+
+// Get all dynamic GPIOs
+static const struct gpio_dt_spec gpios[] = {
+	DT_FOREACH_CHILD(GPIO_DYNAMIC_NODE, GPIO_SPEC_FROM_CHILD)};
 
 ZBUS_CHAN_DECLARE(led_chan);
 ZBUS_SUBSCRIBER_DEFINE(led_sub, 8);
@@ -115,6 +126,12 @@ int main(void)
 	};
 	led_action_t msg_led_action;
 	const struct zbus_channel *chan;
+
+	for (size_t i = 0; i < ARRAY_SIZE(gpios); i++) {
+		if (gpio_pin_configure_dt(&gpios[i], GPIO_DISCONNECTED) != 0) {
+			LOG_ERR("Could not configure GPIO %s", gpios[i].port->name);
+		}
+	}
 
 	if (!device_is_ready(led_strip)) {
 		LOG_ERR("LED strip device %s is not ready", led_strip->name);

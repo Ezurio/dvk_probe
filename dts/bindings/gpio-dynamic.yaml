@@ -1,0 +1,46 @@
+# Copyright (c) 2018, Linaro Limited
+# Copyright (c) 2023-2024, Laird Connectivity
+#
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  This allows you to define a group of GPIO that are configurable at run-time.
+  Each pin is defined in a child node of the gpio-dynamic node.
+
+  This example defines three children in the node /gpio_dynamic.
+
+  The GPIO flags are ignored by the pi_dapi_gpio driver because they are
+  set from the [Python] application.
+
+  / {
+     gpio_dynamic {
+        compatible = "gpio-dynamic";
+        test_point_0 {
+           gpios = <&gpio0 1 0>;
+           label = "TEST_POINT_0,TP0";
+        };
+        test_point_1 {
+           gpios = <&gpio0 2 0>;
+           label = "TEST_POINT_1";
+        };
+        test_point_2 {
+           gpios = <&gpio1 15 0>;
+        };
+     };
+  };
+
+compatible: "gpio-dynamic"
+
+child-binding:
+    description: Dynamic GPIO child node
+    properties:
+       gpios:
+          type: phandle-array
+          required: true
+       label:
+          type: string
+          description: |
+            Human readable string describing the gpio. It can be used by an
+            application/script to identify this test point or to retrieve 
+            its number/index (i.e. child node number) on the parent device.
+            Multiple names can be specified as a comma separated list.
