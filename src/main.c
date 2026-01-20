@@ -20,6 +20,7 @@ LOG_MODULE_REGISTER(dvk_probe, CONFIG_DVK_PROBE_LOG_LEVEL);
 #include "uart_bridge.h"
 #include "app_usbd.h"
 #include "led.h"
+#include "probe_settings.h"
 
 static struct usbd_context *app_usbd;
 
@@ -144,10 +145,47 @@ int main(void)
 		return err;
 	}
 
-	app_usbd = app_usbd_init_device(usbd_msg_cb);
+	/* Initialize probe settings */
+	probe_settings_init();
+
+	/* Set DAP device info from probe settings */
+	if (probe_settings != NULL && probe_settings->base.version >= PROBE_SETTINGS_V1) {
+		err = dap_set_device_info(probe_settings->v1.target_device_vendor,
+					  probe_settings->v1.target_device_name,
+					  probe_settings->v1.target_board_vendor,
+					  probe_settings->v1.target_board_name);
+		if (err) {
+			LOG_WRN("Failed to set DAP device info: %d", err);
+		} else {
+			LOG_INF("DAP device info set from probe settings");
+		}
+	}
+
+	app_usbd = app_usbd_setup_device(usbd_msg_cb);
 	if (app_usbd == NULL) {
-		LOG_ERR("Failed to initialize USB device");
+		LOG_ERR("Failed to setup USB device");
 		return -ENODEV;
+	}
+
+	/* Set USB VID and PID from probe settings */
+	if (probe_settings != NULL && probe_settings->base.version >= PROBE_SETTINGS_V2) {
+		err = usbd_device_set_vid(app_usbd, probe_settings->v2.usb_vid);
+		if (err) {
+			LOG_WRN("Failed to set USB VID: %d", err);
+		}
+		err = usbd_device_set_pid(app_usbd, probe_settings->v2.usb_pid);
+		if (err) {
+			LOG_WRN("Failed to set USB PID: %d", err);
+		}
+		LOG_INF("USB VID:PID set to 0x%04x:0x%04x",
+			probe_settings->v2.usb_vid, probe_settings->v2.usb_pid);
+	}
+
+	/* Initialize USB device */
+	err = usbd_init(app_usbd);
+	if (err) {
+		LOG_ERR("Failed to initialize USB device: %d", err);
+		return err;
 	}
 
 	if (!usbd_can_detect_vbus(app_usbd)) {
