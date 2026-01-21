@@ -12,6 +12,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/usbd.h>
+#include <zephyr/app_version.h>
 #include <cmsis_dap.h>
 
 #include <zephyr/logging/log.h>
@@ -144,6 +145,8 @@ int main(void)
 		LOG_ERR("Failed to initialize DAP controller, %d", err);
 		return err;
 	}
+
+	dap_set_fw_version(APP_VERSION_STRING);
 
 	/* Initialize probe settings */
 	probe_settings_init();
