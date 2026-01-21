@@ -22,6 +22,7 @@ LOG_MODULE_REGISTER(dvk_probe, CONFIG_DVK_PROBE_LOG_LEVEL);
 #include "app_usbd.h"
 #include "led.h"
 #include "probe_settings.h"
+#include "dap_vendor.h"
 
 static struct usbd_context *app_usbd;
 
@@ -147,6 +148,11 @@ int main(void)
 	}
 
 	dap_set_fw_version(APP_VERSION_STRING);
+
+	err = dap_set_vendor_cmd_callback(dap_vendor_cmd_handler);
+	if (err < 0) {
+		LOG_ERR("Failed to register vendor command callback: %d", err);
+	}
 
 	/* Initialize probe settings */
 	probe_settings_init();
