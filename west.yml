@@ -11,7 +11,7 @@ manifest:
 
   projects:
     - name: zephyr
-      revision: a6ceb3b944f0fae0f8ffe57b834f90295c1128ef
+      revision: 64cba6da042b400c91fbc793bf0da1e52a402a23
       import: true
 
   self:
