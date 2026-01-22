@@ -83,6 +83,7 @@ static void find_internal_settings(void)
 			}
 		}
 	}
+	LOG_INF("Valid settings found at offset %u, next offset %u", current_settings_offset, next_settings_offset);
 }
 
 static int read_settings_from_flash(probe_settings_ut *settings)
@@ -94,6 +95,7 @@ static int read_settings_from_flash(probe_settings_ut *settings)
 		LOG_ERR("Failed to read settings from flash: %d", ret);
 		return ret;
 	}
+	LOG_INF("Settings read at offset %u", current_settings_offset);
 
 	return 0;
 }
@@ -205,19 +207,18 @@ int write_internal_settings(const probe_settings_ut *settings, uint16_t size)
 		next_settings_offset = 0;
 	}
 
-	/* Write new settings at next offset */
-	ret = flash_area_write(settings_area, next_settings_offset, settings, size);
+	/* Write new settings at next offset - must write full page (256 bytes) for RP2040 flash */
+	ret = flash_area_write(settings_area, next_settings_offset, settings, SETTINGS_PAGE_SIZE);
 	if (ret < 0) {
 		LOG_ERR("Failed to write settings: %d", ret);
 		return ret;
 	}
+	LOG_INF("Settings written at offset %u", next_settings_offset);
 
 	/* Update page tracking */
 	find_internal_settings();
 
 	/* Update cached settings */
 	memcpy(&probe_settings_data, settings, sizeof(probe_settings_ut));
-
-	LOG_INF("Settings written successfully at offset %u", next_settings_offset);
 	return 0;
 }

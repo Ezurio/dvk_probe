@@ -16,6 +16,7 @@
             "servertype": "jlink",
             "device": "RP2040_M0_0",
             "breakAfterReset": false,
+            "svdFile": "${workspaceFolder}/../modules/hal/rpi_pico/src/rp2040/hardware_regs/RP2040.svd",
             "rtos": "Zephyr"
         },
     ]

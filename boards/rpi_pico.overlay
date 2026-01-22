@@ -174,9 +174,9 @@
 			read-only;
 		};
 
-		settings_partition: partition@1FEF00 {
+		settings_partition: partition@1FF000 {
 			label = "settings-partition";
-			reg = <0x1FEF00 0x1000>;
+			reg = <0x1FF000 0x1000>;
 		};
 	};
 };
