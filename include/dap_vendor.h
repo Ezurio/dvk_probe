@@ -41,26 +41,26 @@ extern "C" {
  * @param uint8_t gpio to read
  * @return uint8_t < 0 error, 1 = high, 0 = low
  */
-#define ID_DAP_VENDOR_READ_IO           	(ID_DAP_VENDOR31 - 2)
+#define ID_DAP_VENDOR_READ_IO           (ID_DAP_VENDOR31 - 2)
 
 /**
  * @brief Deprecated EEPROM read/write functions. Use read/write settings instead.
  * These defines are here for informational purposes only.
  */
 #define ID_DAP_VENDOR_READ_BOARD_ID_BYTES   (ID_DAP_VENDOR31 - 3)
-#define ID_DAP_VENDOR_WRITE_BOARD_ID_BYTES   (ID_DAP_VENDOR31 - 4)
+#define ID_DAP_VENDOR_WRITE_BOARD_ID_BYTES  (ID_DAP_VENDOR31 - 4)
 
 /**
  * @brief Reboot the debug probe
  * @param uint8_t reboot to bootloader if 1, else reboot and run application
  */
-#define ID_DAP_VENDOR_REBOOT                 (ID_DAP_VENDOR31 - 5)
+#define ID_DAP_VENDOR_REBOOT                (ID_DAP_VENDOR31 - 5)
 
 /**
  * @brief Read settings from probe (internal flash)
  * @return bytes read. length of bytes read is always 256 bytes. < 0 indicates error
  */
-#define ID_DAP_VENDOR_READ_SETTINGS          (ID_DAP_VENDOR31 - 6)
+#define ID_DAP_VENDOR_READ_SETTINGS         (ID_DAP_VENDOR31 - 6)
 
 /**
  * @brief Write settings to probe (internal flash)
@@ -68,9 +68,9 @@ extern "C" {
  * @param uint8_t* bytes to write. This will always be 256 bytes (a full settings page)
  * @return int8_t result 0 on success, < 0 indicates error
  */
-#define ID_DAP_VENDOR_WRITE_SETTINGS         (ID_DAP_VENDOR31 - 7)
+#define ID_DAP_VENDOR_WRITE_SETTINGS        (ID_DAP_VENDOR31 - 7)
 
-/* clang-format off */
+/* clang-format on */
 
 enum {
 	DAP_VENDOR_ERR_INVALID_IO = 1,
