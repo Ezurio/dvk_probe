@@ -36,6 +36,14 @@ const led_action_t LED_RED_FLASH = {
 	.repeat_count = 0,
 };
 
+const led_action_t LED_GREEN_FLASH = {
+	.dev = led_strip,
+	.color = LED_GREEN,
+	.on_time_ms = LED_FLASH_FAST_TIME_MS,
+	.off_time_ms = 0,
+	.repeat_count = 0,
+};
+
 int led_send_action(led_action_t *action)
 {
 	int ret;

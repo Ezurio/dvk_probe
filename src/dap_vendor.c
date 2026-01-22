@@ -18,6 +18,7 @@
 #include <string.h>
 #include "dap_vendor.h"
 #include "probe_settings.h"
+#include "led.h"
 
 LOG_MODULE_REGISTER(dap_vendor, LOG_LEVEL_INF);
 
@@ -179,6 +180,7 @@ uint16_t dap_vendor_cmd_handler(uint8_t cmd_id, const uint8_t *request, uint8_t 
 	int ret;
 	int temp;
 	uint16_t response_len = 2;
+	bool flash_led = true;
 
 	/* First byte is always the command ID */
 	response[0] = cmd_id;
@@ -236,11 +238,16 @@ uint16_t dap_vendor_cmd_handler(uint8_t cmd_id, const uint8_t *request, uint8_t 
 		break;
 
 	default:
+		flash_led = false;
 		LOG_WRN("Unknown vendor command: 0x%02X", cmd_id);
 		/* Unknown vendor command */
 		response[0] = ID_DAP_INVALID;
 		response_len = 1;
 		break;
+	}
+
+	if (flash_led) {
+		led_send_action((led_action_t *)&LED_GREEN_FLASH);
 	}
 
 	return response_len;

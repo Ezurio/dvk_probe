@@ -47,6 +47,7 @@ typedef struct led_action {
 extern const struct device *const led_strip;
 extern const led_action_t LED_BLUE_FLASH;
 extern const led_action_t LED_RED_FLASH;
+extern const led_action_t LED_GREEN_FLASH;
 
 /**
  * @brief Send LED action to LED handler
