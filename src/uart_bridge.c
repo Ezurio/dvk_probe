@@ -19,7 +19,14 @@
 LOG_MODULE_REGISTER(uart_bridge, CONFIG_UART_LOG_LEVEL);
 
 #define RING_BUF_SIZE           CONFIG_RFPROS_UART_BRIDGE_BUF_SIZE
-#define RING_BUF_FULL_THRESHOLD (RING_BUF_SIZE / 3)
+#define RING_BUF_FULL_THRESHOLD 128
+#define LED_ACTIVITY_TIMER_MS   50
+#define BRIDGE_COUNT            DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
+
+/* Global LED work - shared across all bridges */
+static struct k_work_delayable global_led_work;
+static const struct device *bridge_devices[BRIDGE_COUNT];
+static uint8_t bridge_count = 0;
 
 struct uart_bridge_config {
 	const struct device *peer_dev[2];
@@ -33,6 +40,7 @@ struct uart_bridge_peer_data {
 
 struct uart_bridge_data {
 	struct uart_bridge_peer_data peer[2];
+	bool activity;
 };
 
 const struct device *uart_bridge_get_peer(const struct device *dev, const struct device *bridge_dev)
@@ -90,16 +98,6 @@ static uint8_t uart_bridge_get_idx(const struct device *dev, const struct device
 	}
 }
 
-static void uart_bridge_flash_led(const struct device *dev)
-{
-	/* Flash LED to indicate activity */
-	if (strstr(dev->name, "UART0") != NULL) {
-		led_send_action((led_action_t *)&LED_BLUE_FLASH);
-	} else if (strstr(dev->name, "UART1") != NULL) {
-		led_send_action((led_action_t *)&LED_RED_FLASH);
-	}
-}
-
 static void uart_bridge_handle_rx(const struct device *dev, const struct device *bridge_dev)
 {
 	const struct uart_bridge_config *cfg = bridge_dev->config;
@@ -128,12 +126,16 @@ static void uart_bridge_handle_rx(const struct device *dev, const struct device 
 
 	recv_len = uart_fifo_read(dev, recv_buf, rb_len);
 	if (recv_len < 0) {
-		ring_buf_put_finish(&own_data->rb, 0);
+		(void)ring_buf_put_finish(&own_data->rb, 0);
 		LOG_ERR("%s: rx error: %d", dev->name, recv_len);
 		return;
 	} else {
 		LOG_DBG("%s: received %d bytes", dev->name, recv_len);
-		uart_bridge_flash_led(dev);
+		data->activity = true;
+		/* Start LED timer if not already running */
+		if (!k_work_delayable_is_pending(&global_led_work)) {
+			k_work_schedule(&global_led_work, K_MSEC(LED_ACTIVITY_TIMER_MS));
+		}
 	}
 
 	ret = ring_buf_put_finish(&own_data->rb, recv_len);
@@ -167,11 +169,12 @@ static void uart_bridge_handle_tx(const struct device *dev, const struct device 
 
 	sent_len = uart_fifo_fill(dev, send_buf, rb_len);
 	if (sent_len < 0) {
-		ring_buf_get_finish(&peer_data->rb, 0);
+		(void)ring_buf_get_finish(&peer_data->rb, 0);
 		LOG_ERR("%s: tx error: %d", dev->name, sent_len);
 		return;
 	} else {
 		LOG_DBG("%s: sent %d bytes", dev->name, sent_len);
+		data->activity = true;
 	}
 
 	ret = ring_buf_get_finish(&peer_data->rb, sent_len);
@@ -196,6 +199,7 @@ static void interrupt_handler(const struct device *dev, void *user_data)
 		if (uart_irq_rx_ready(dev)) {
 			uart_bridge_handle_rx(dev, bridge_dev);
 		}
+
 		if (uart_irq_tx_ready(dev)) {
 			uart_bridge_handle_tx(dev, bridge_dev);
 		}
@@ -208,6 +212,7 @@ static int uart_bridge_pm_action(const struct device *dev, enum pm_device_action
 
 	switch (action) {
 	case PM_DEVICE_ACTION_SUSPEND:
+		k_work_cancel_delayable(&global_led_work);
 		uart_irq_rx_disable(cfg->peer_dev[0]);
 		uart_irq_rx_disable(cfg->peer_dev[1]);
 		uart_irq_callback_user_data_set(cfg->peer_dev[0], NULL, NULL);
@@ -226,12 +231,64 @@ static int uart_bridge_pm_action(const struct device *dev, enum pm_device_action
 	return 0;
 }
 
+static void global_led_work_handler(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	bool had_activity = false;
+	bool peer0_activity = false;
+	bool peer1_activity = false;
+
+	/* Check activity across all bridges */
+	for (int i = 0; i < bridge_count; i++) {
+		struct uart_bridge_data *data = bridge_devices[i]->data;
+
+		if (data->activity) {
+			if (i == 0) {
+				peer0_activity = true;
+			} else {
+				peer1_activity = true;
+			}
+			data->activity = false;
+			had_activity = true;
+		}
+	}
+
+	/* Update LEDs based on aggregated activity */
+	if (peer0_activity) {
+		toggle_led(LED_BLUE);
+	} else {
+		led_off(LED_BLUE);
+	}
+
+	if (peer1_activity) {
+		toggle_led(LED_RED);
+	} else {
+		led_off(LED_RED);
+	}
+
+	/* Reschedule if there was activity */
+	if (had_activity) {
+		k_work_schedule(dwork, K_MSEC(LED_ACTIVITY_TIMER_MS));
+	}
+}
+
 static int uart_bridge_init(const struct device *dev)
 {
 	struct uart_bridge_data *data = dev->data;
 
 	ring_buf_init(&data->peer[0].rb, RING_BUF_SIZE, data->peer[0].buf);
 	ring_buf_init(&data->peer[1].rb, RING_BUF_SIZE, data->peer[1].buf);
+
+	data->activity = false;
+
+	/* Register this bridge and initialize global LED work once */
+	if (bridge_count == 0) {
+		k_work_init_delayable(&global_led_work, global_led_work_handler);
+	}
+
+	if (bridge_count < BRIDGE_COUNT) {
+		bridge_devices[bridge_count++] = dev;
+	}
 
 	return pm_device_driver_init(dev, uart_bridge_pm_action);
 }

@@ -24,16 +24,13 @@
 	 .g = ((uint8_t)((_g) * LED_LEVEL_LIMIT)),                                                 \
 	 .b = ((uint8_t)((_b) * LED_LEVEL_LIMIT))}
 
-#define LED_RED    LED_RGB(255, 0, 0)
-#define LED_ORANGE LED_RGB(255, 64, 0)
-#define LED_YELLOW LED_RGB(255, 255, 0)
-#define LED_GREEN  LED_RGB(0, 255, 0)
-#define LED_BLUE   LED_RGB(0, 0, 255)
-#define LED_PURPLE LED_RGB(255, 0, 255)
-#define LED_WHITE  LED_RGB(255, 255, 255)
-#define LED_OFF    LED_RGB(0, 0, 0)
+#define LED_COLOR_RED   LED_RGB(255, 0, 0)
+#define LED_COLOR_GREEN LED_RGB(0, 255, 0)
+#define LED_COLOR_BLUE  LED_RGB(0, 0, 255)
+#define LED_COLOR_WHITE  LED_RGB(255, 255, 255)
+#define LED_COLOR_OFF   LED_RGB(0, 0, 0)
 
-#define LED_FLASH_TIME_MS 30
+#define LED_FLASH_TIME_MS      30
 #define LED_FLASH_FAST_TIME_MS 10
 
 typedef struct led_action {
@@ -43,6 +40,15 @@ typedef struct led_action {
 	uint16_t off_time_ms;
 	uint16_t repeat_count;
 } led_action_t;
+
+typedef enum {
+	LED_BLACK, /* OFF */
+	LED_RED,
+	LED_GREEN,
+	LED_BLUE,
+	LED_WHITE,
+	NUMBER_OF_LED_COLORS,
+} led_color_t;
 
 extern const struct device *const led_strip;
 extern const led_action_t LED_BLUE_FLASH;
@@ -69,5 +75,24 @@ int led_send_action(led_action_t *action);
  * @return int 0 on success, negative error code on failure
  */
 int led_do_action(led_action_t *action);
+
+/**
+ * @brief Toggle LED color channels
+ *
+ * @param led_color Color channel to toggle.
+ */
+void toggle_led(led_color_t led_color);
+
+/**
+ * @brief Turn off specified LED color channel
+ *
+ * @param led_color Color channel to turn off.
+ */
+void led_off(led_color_t led_color);
+
+/**
+ * @brief Initialize LED subsystem
+ */
+int led_init(void);
 
 #endif /* APP_LED_H */

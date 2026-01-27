@@ -122,7 +122,7 @@ int main(void)
 	int err;
 	led_action_t led_boot_action = {
 		.dev = led_strip,
-		.color = LED_WHITE,
+		.color = LED_COLOR_WHITE,
 		.on_time_ms = LED_FLASH_TIME_MS,
 		.off_time_ms = LED_FLASH_TIME_MS,
 		.repeat_count = 2,
@@ -136,7 +136,7 @@ int main(void)
 		}
 	}
 
-	if (!device_is_ready(led_strip)) {
+	if (led_init() != 0) {
 		LOG_ERR("LED strip device %s is not ready", led_strip->name);
 		return -ENODEV;
 	}
@@ -186,8 +186,8 @@ int main(void)
 		if (err) {
 			LOG_WRN("Failed to set USB PID: %d", err);
 		}
-		LOG_INF("USB VID:PID set to 0x%04x:0x%04x",
-			probe_settings->v2.usb_vid, probe_settings->v2.usb_pid);
+		LOG_INF("USB VID:PID set to 0x%04x:0x%04x", probe_settings->v2.usb_vid,
+			probe_settings->v2.usb_pid);
 	}
 
 	/* Initialize USB device */
