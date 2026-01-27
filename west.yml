@@ -10,6 +10,8 @@ manifest:
     revision: main
 
   projects:
+    - name: utp_python_common_lib
+      revision: 3ceca9d6c383bc7f93e47808a18a3fa6aca86825
     - name: zephyr
       revision: 64cba6da042b400c91fbc793bf0da1e52a402a23
       import: true

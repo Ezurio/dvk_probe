@@ -1,9 +1,15 @@
 {
 	"folders": [
 		{
+			"name": "dvk_probe",
 			"path": "."
 		},
 		{
+			"name": "utp_python_common_lib",
+			"path": "../utp_python_common_lib"
+		},
+		{
+			"name": "zephyr",
 			"path": "../zephyr"
 		}
 	],
