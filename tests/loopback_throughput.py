@@ -39,53 +39,52 @@ RX_TIMEOUT_SECS = 1
 
 def send_receive_data(board: If820Board):
     board.p_uart.clear_rx_queue()
-    data_sent = []
-    data_received = []
+    data_sent = bytearray()
     rx_done_event = threading.Event()
     tx_done_event = threading.Event()
     tx_start_time = time.time()
     rx_thread = threading.Thread(target=lambda: __receive_data_thread(board,
                                                                       data_sent,
-                                                                      data_received,
                                                                       rx_done_event,
                                                                       tx_start_time,
-                                                                      tx_done_event))
+                                                                      tx_done_event),
+                                 daemon=True)
     rx_thread.start()
     logging.info(
         f"Start sending data for at least {THROUGHPUT_TEST_TIMEOUT_SECS} seconds...")
     packet_num = 0
-    while (time.time() - tx_start_time) < THROUGHPUT_TEST_TIMEOUT_SECS:
-        send = bytearray(''.join(random.choices(string.ascii_letters +
+    # Pre-generate random data once to avoid overhead in the send loop
+    random_chunk = bytes(''.join(random.choices(string.ascii_letters +
                                                 string.digits, k=int(SEND_DATA_CHUNK_LEN))), 'utf-8')
-        # Add a packet header that contains the packet number
-        # This is useful for identifying the packet when looking at UART logic traces
+    while (time.time() - tx_start_time) < THROUGHPUT_TEST_TIMEOUT_SECS:
+        # Create a mutable copy and add packet header
+        send = bytearray(random_chunk)
         header = packet_num.to_bytes(4, byteorder='little')
         send[:4] = header
         send = bytes(send)
         board.p_uart.send(send)
-        data_sent.extend(list(send))
+        data_sent.extend(send)
         packet_num += 1
 
-    logging.info(f"Sent {len(data_sent)} bytes, Wait for data to be received")
+    logging.info(f"Sent {len(data_sent)} bytes, Wait for data to be received...")
     tx_done_event.set()
     if not rx_done_event.wait(THROUGHPUT_TEST_TIMEOUT_SECS * 2):
         logging.error("Timeout waiting for data to be received")
 
 
 def __receive_data_thread(board: If820Board,
-                          data_sent: list,
-                          data_received: list,
+                          data_sent: bytearray,
                           rx_done_event: threading.Event,
                           tx_start_time: float,
                           tx_done_event: threading.Event):
     last_rx_time = time.time()
     logging.info("Start receiving data...")
-    data_received = []
+    data_received = bytearray()
     while time.time() - last_rx_time < RX_TIMEOUT_SECS or len(data_received) <= 0 or not tx_done_event.is_set():
         rx_data = board.p_uart.read()
         if len(rx_data) > 0:
             last_rx_time = time.time()
-            data_received.extend(list(rx_data))
+            data_received.extend(rx_data)
     logging.info(f"All data received! Received {len(data_received)} bytes")
     if data_received != data_sent:
         logging.error(
@@ -98,7 +97,7 @@ def __receive_data_thread(board: If820Board,
                     f"tx[{index}]: {hex(data_sent[index])}, tx[{index + 1}]: {hex(data_sent[index + 1])}, tx[{index + 2}]: {hex(data_sent[index + 2])}")
                 print(
                     f"rx[{index}]: {hex(data_received[index])}, rx[{index + 1}]: {hex(data_received[index + 1])}")
-                data_received.insert(index, data_sent[index])
+                data_received[index:index] = bytes([data_sent[index]])
                 # Just print the first mismatch
                 break
     bytes_per_sec = len(data_received) / (last_rx_time - tx_start_time)
