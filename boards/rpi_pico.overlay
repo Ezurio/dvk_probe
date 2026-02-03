@@ -131,11 +131,15 @@
 	cdc_acm_uart0: cdc_acm_uart0 {
 		compatible = "zephyr,cdc-acm-uart";
 		label = "USB CDC-ACM UART0";
+		tx-fifo-size = <8192>;
+		rx-fifo-size = <8192>;
 	};
 
 	cdc_acm_uart1: cdc_acm_uart1 {
 		compatible = "zephyr,cdc-acm-uart";
 		label = "USB CDC-ACM UART1";
+		tx-fifo-size = <8192>;
+		rx-fifo-size = <8192>;
 	};
 };
 
