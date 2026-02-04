@@ -24,6 +24,8 @@ LOG_MODULE_REGISTER(dvk_probe, CONFIG_DVK_PROBE_LOG_LEVEL);
 #include "probe_settings.h"
 #include "dap_vendor.h"
 
+#define TARGET_RESET_PULSE_MS 50
+
 static struct usbd_context *app_usbd;
 
 #define DEVICE_DT_GET_COMMA(node_id) DEVICE_DT_GET(node_id),
@@ -33,15 +35,20 @@ static const struct device *const swd_dev = DEVICE_DT_GET_ONE(zephyr_swdp_gpio);
 static const struct device *uart_bridges[] = {
 	DT_FOREACH_STATUS_OKAY(rfpros_uart_bridge, DEVICE_DT_GET_COMMA)};
 
-// Get the node ID of gpio_dynamic
+/* Get the node ID of gpio_dynamic */
 #define GPIO_DYNAMIC_NODE DT_PATH(gpio_dynamic)
 
-// Macro to extract gpio_dt_spec from a child node
+/* Macro to extract gpio_dt_spec from a child node */
 #define GPIO_SPEC_FROM_CHILD(child_node) GPIO_DT_SPEC_GET_BY_IDX(child_node, gpios, 0),
 
-// Get all dynamic GPIOs
+/* Get all dynamic GPIOs */
 static const struct gpio_dt_spec gpios[] = {
 	DT_FOREACH_CHILD(GPIO_DYNAMIC_NODE, GPIO_SPEC_FROM_CHILD)};
+
+/* Target reset GPIO */
+#define SWDP_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(zephyr_swdp_gpio)
+static const struct gpio_dt_spec target_reset_gpio =
+	GPIO_DT_SPEC_GET(SWDP_NODE, reset_gpios);
 
 ZBUS_CHAN_DECLARE(led_chan);
 ZBUS_SUBSCRIBER_DEFINE(led_sub, 8);
@@ -188,6 +195,23 @@ int main(void)
 		}
 		LOG_INF("USB VID:PID set to 0x%04x:0x%04x", probe_settings->v2.usb_vid,
 			probe_settings->v2.usb_pid);
+	}
+
+	/* Reset target device on boot */
+	if (!gpio_is_ready_dt(&target_reset_gpio)) {
+		LOG_ERR("Target reset GPIO is not ready");
+	} else {
+		err = gpio_pin_configure_dt(&target_reset_gpio, GPIO_OUTPUT_ACTIVE);
+		if (err) {
+			LOG_ERR("Failed to configure target reset GPIO: %d", err);
+		} else {
+			LOG_DBG("Asserting target reset");
+			k_msleep(TARGET_RESET_PULSE_MS);
+			gpio_pin_set_dt(&target_reset_gpio, 0);
+			LOG_DBG("Released target reset");
+			/* Set back to disconnected so DAP can control it */
+			gpio_pin_configure_dt(&target_reset_gpio, GPIO_DISCONNECTED);
+		}
 	}
 
 	/* Initialize USB device */
