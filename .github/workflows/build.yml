@@ -1,0 +1,87 @@
+name: Build Firmware
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GH_TOKEN: ${{ secrets.RFPROS_TOKEN }}
+  PYTHON_VER: 3.12
+  SOURCE_DIR: dvk_probe
+  BUILD_DIR: build
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          path: ${{ env.SOURCE_DIR }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VER }}
+
+      - name: Install Zephyr Dependencies
+        run: |
+          sudo apt update
+          sudo apt install --no-install-recommends git cmake ninja-build gperf \
+            ccache dfu-util device-tree-compiler wget python3-dev python3-venv python3-tk \
+            xz-utils file make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1
+
+      - name: Install Python Tools
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install west
+
+      - name: Pull Source Code
+        run: |
+          set -x
+          gh auth setup-git
+          source venv/bin/activate
+          west init -l ${{env.SOURCE_DIR}}
+          west update
+
+      - name: Setup Zephyr Build
+        run: |
+          set -x
+          source venv/bin/activate
+          west zephyr-export
+          west packages pip --install
+          west sdk install -t arm-zephyr-eabi
+
+      - name: Build Firmware
+        run: |
+          source venv/bin/activate
+          west build -p -b rpi_pico ${{ env.SOURCE_DIR }}
+
+      - name: Extract Version
+        id: version
+        run: |
+          VERSION=$(grep 'APP_VERSION_STRING' ${{ env.BUILD_DIR }}/zephyr/include/generated/zephyr/app_version.h | sed 's/.*"\(.*\)".*/\1/')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Upload Firmware Artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: dvk_probe-firmware-v${{ steps.version.outputs.version }}
+          path: |
+            ${{ env.BUILD_DIR }}/zephyr/zephyr.elf
+            ${{ env.BUILD_DIR }}/zephyr/zephyr.bin
+            ${{ env.BUILD_DIR }}/zephyr/zephyr.hex
+            ${{ env.BUILD_DIR }}/zephyr/zephyr.uf2
+          if-no-files-found: error
