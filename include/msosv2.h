@@ -27,13 +27,8 @@
 		0x00, '4', 0x00, '3', 0x00, '2', 0x00, '1', 0x00, 'F', 0x00, 'E', 0x00, '}', 0x00, \
 		0x00, 0x00, 0x00, 0x00
 
-/*
- * Calculate the DAP interface number dynamically based on CDC ACM instances.
- * Each CDC ACM instance uses 2 interfaces (control + data), so the DAP interface
- * comes after all CDC ACM interfaces.
- */
-#define CDC_ACM_INSTANCE_COUNT DT_NUM_INST_STATUS_OKAY(zephyr_cdc_acm_uart)
-#define DAP_INTERFACE_NUMBER   (CDC_ACM_INSTANCE_COUNT * 2)
+/* CMSIS-DAP is always registered first, so it is always interface 0. */
+#define DAP_INTERFACE_NUMBER   0
 
 /*
  * The DAP function subset contains the WinUSB compatible ID and device interface GUID.
@@ -61,7 +56,7 @@ const struct msosv2_descriptor msosv2_desc = {
 			.dwWindowsVersion = sys_cpu_to_le32(APP_MSOS2_OS_VERSION),
 			.wTotalLength = sizeof(msosv2_desc),
 		},
-	/* DAP interface number is calculated dynamically based on CDC ACM instances */
+	/* DAP is always interface 0 */
 	.dap_subset_header =
 		{
 			.wLength = sizeof(struct msosv2_function_subset_header),

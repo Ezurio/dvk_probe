@@ -18,12 +18,6 @@ LOG_MODULE_REGISTER(dvk_probe_usbd_config, CONFIG_DVK_PROBE_LOG_LEVEL);
 
 #include "msosv2.h"
 
-/* By default, do not register the USB DFU class DFU mode instance. */
-static const char *const blocklist[] = {
-	"dfu_dfu",
-	NULL,
-};
-
 /* doc device instantiation start */
 /*
  * Instantiate a context named app_usbd using the default USB device
@@ -140,12 +134,17 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 			return NULL;
 		}
 
-		err = usbd_register_all_classes(&app_usbd, USBD_SPEED_HS, 1,
-						blocklist);
-		if (err) {
-			LOG_ERR("Failed to add register classes");
-			return NULL;
-		}
+		/* Register the USB classes in the order we want them to appear */
+		err = usbd_register_class(&app_usbd, "dap_func_0", USBD_SPEED_HS, 1);
+		if (err) { LOG_ERR("Failed to register dap_func_0 HS"); return NULL; }
+		err = usbd_register_class(&app_usbd, "cdc_acm_0", USBD_SPEED_HS, 1);
+		if (err) { LOG_ERR("Failed to register cdc_acm_0 HS"); return NULL; }
+		err = usbd_register_class(&app_usbd, "cdc_acm_1", USBD_SPEED_HS, 1);
+		if (err) { LOG_ERR("Failed to register cdc_acm_1 HS"); return NULL; }
+#if DT_NODE_EXISTS(DT_NODELABEL(cdc_acm_uart2))
+		err = usbd_register_class(&app_usbd, "cdc_acm_2", USBD_SPEED_HS, 1);
+		if (err) { LOG_ERR("Failed to register cdc_acm_2 HS"); return NULL; }
+#endif
 
 		app_fix_code_triple(&app_usbd, USBD_SPEED_HS);
 	}
@@ -159,12 +158,17 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 	}
 	/* doc configuration register end */
 
-	/* doc functions register start */
-	err = usbd_register_all_classes(&app_usbd, USBD_SPEED_FS, 1, blocklist);
-	if (err) {
-		LOG_ERR("Failed to add register classes");
-		return NULL;
-	}
+	/* Register the USB classes in the order we want them to appear */
+	err = usbd_register_class(&app_usbd, "dap_func_0", USBD_SPEED_FS, 1);
+	if (err) { LOG_ERR("Failed to register dap_func_0 FS"); return NULL; }
+	err = usbd_register_class(&app_usbd, "cdc_acm_0", USBD_SPEED_FS, 1);
+	if (err) { LOG_ERR("Failed to register cdc_acm_0 FS"); return NULL; }
+	err = usbd_register_class(&app_usbd, "cdc_acm_1", USBD_SPEED_FS, 1);
+	if (err) { LOG_ERR("Failed to register cdc_acm_1 FS"); return NULL; }
+#if DT_NODE_EXISTS(DT_NODELABEL(cdc_acm_uart2))
+	err = usbd_register_class(&app_usbd, "cdc_acm_2", USBD_SPEED_FS, 1);
+	if (err) { LOG_ERR("Failed to register cdc_acm_2 FS"); return NULL; }
+#endif
 	/* doc functions register end */
 
 	app_fix_code_triple(&app_usbd, USBD_SPEED_FS);
