@@ -23,9 +23,8 @@ LOG_MODULE_REGISTER(dvk_probe_usbd_config, CONFIG_DVK_PROBE_LOG_LEVEL);
  * Instantiate a context named app_usbd using the default USB device
  * controller, the vendor ID, and the product ID.
  */
-USBD_DEVICE_DEFINE(app_usbd,
-		   DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)),
-		   CONFIG_APP_USBD_VID, CONFIG_APP_USBD_PID);
+USBD_DEVICE_DEFINE(app_usbd, DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), CONFIG_APP_USBD_VID,
+		   CONFIG_APP_USBD_PID);
 /* doc device instantiation end */
 
 /* doc string instantiation start */
@@ -37,23 +36,13 @@ IF_ENABLED(CONFIG_HWINFO, (USBD_DESC_SERIAL_NUMBER_DEFINE(app_sn)));
 /* doc string instantiation end */
 
 USBD_DESC_CONFIG_DEFINE(fs_cfg_desc, "FS Configuration");
-USBD_DESC_CONFIG_DEFINE(hs_cfg_desc, "HS Configuration");
 
 /* doc configuration instantiation start */
-static const uint8_t attributes = (IS_ENABLED(CONFIG_APP_USBD_SELF_POWERED) ?
-				   USB_SCD_SELF_POWERED : 0) |
-				  (IS_ENABLED(CONFIG_APP_USBD_REMOTE_WAKEUP) ?
-				   USB_SCD_REMOTE_WAKEUP : 0);
+static const uint8_t attributes =
+	(IS_ENABLED(CONFIG_APP_USBD_SELF_POWERED) ? USB_SCD_SELF_POWERED : 0) |
+	(IS_ENABLED(CONFIG_APP_USBD_REMOTE_WAKEUP) ? USB_SCD_REMOTE_WAKEUP : 0);
 
-/* Full speed configuration */
-USBD_CONFIGURATION_DEFINE(app_fs_config,
-			  attributes,
-			  CONFIG_APP_USBD_MAX_POWER, &fs_cfg_desc);
-
-/* High speed configuration */
-USBD_CONFIGURATION_DEFINE(app_hs_config,
-			  attributes,
-			  CONFIG_APP_USBD_MAX_POWER, &hs_cfg_desc);
+USBD_CONFIGURATION_DEFINE(app_fs_config, attributes, CONFIG_APP_USBD_MAX_POWER, &fs_cfg_desc);
 /* doc configuration instantiation end */
 
 #if CONFIG_APP_USBD_20_EXTENSION_DESC
@@ -71,23 +60,18 @@ static const struct usb_bos_capability_lpm bos_cap_lpm = {
 USBD_DESC_BOS_DEFINE(app_usbext, sizeof(bos_cap_lpm), &bos_cap_lpm);
 #endif
 
-static void app_fix_code_triple(struct usbd_context *uds_ctx,
-				   const enum usbd_speed speed)
+static void app_fix_code_triple(struct usbd_context *uds_ctx, const enum usbd_speed speed)
 {
 	/* Always use class code information from Interface Descriptors */
-	if (IS_ENABLED(CONFIG_USBD_CDC_ACM_CLASS) ||
-	    IS_ENABLED(CONFIG_USBD_CDC_ECM_CLASS) ||
-	    IS_ENABLED(CONFIG_USBD_CDC_NCM_CLASS) ||
-	    IS_ENABLED(CONFIG_USBD_MIDI2_CLASS) ||
-	    IS_ENABLED(CONFIG_USBD_AUDIO2_CLASS) ||
-	    IS_ENABLED(CONFIG_USBD_VIDEO_CLASS)) {
+	if (IS_ENABLED(CONFIG_USBD_CDC_ACM_CLASS) || IS_ENABLED(CONFIG_USBD_CDC_ECM_CLASS) ||
+	    IS_ENABLED(CONFIG_USBD_CDC_NCM_CLASS) || IS_ENABLED(CONFIG_USBD_MIDI2_CLASS) ||
+	    IS_ENABLED(CONFIG_USBD_AUDIO2_CLASS) || IS_ENABLED(CONFIG_USBD_VIDEO_CLASS)) {
 		/*
 		 * Class with multiple interfaces have an Interface
 		 * Association Descriptor available, use an appropriate triple
 		 * to indicate it.
 		 */
-		usbd_device_set_code_triple(uds_ctx, speed,
-					    USB_BCC_MISCELLANEOUS, 0x02, 0x01);
+		usbd_device_set_code_triple(uds_ctx, speed, USB_BCC_MISCELLANEOUS, 0x02, 0x01);
 	} else {
 		usbd_device_set_code_triple(uds_ctx, speed, 0, 0, 0);
 	}
@@ -125,33 +109,8 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 	}
 	/* doc add string descriptor end */
 
-	if (USBD_SUPPORTS_HIGH_SPEED &&
-	    usbd_caps_speed(&app_usbd) == USBD_SPEED_HS) {
-		err = usbd_add_configuration(&app_usbd, USBD_SPEED_HS,
-					     &app_hs_config);
-		if (err) {
-			LOG_ERR("Failed to add High-Speed configuration");
-			return NULL;
-		}
-
-		/* Register the USB classes in the order we want them to appear */
-		err = usbd_register_class(&app_usbd, "dap_func_0", USBD_SPEED_HS, 1);
-		if (err) { LOG_ERR("Failed to register dap_func_0 HS"); return NULL; }
-		err = usbd_register_class(&app_usbd, "cdc_acm_0", USBD_SPEED_HS, 1);
-		if (err) { LOG_ERR("Failed to register cdc_acm_0 HS"); return NULL; }
-		err = usbd_register_class(&app_usbd, "cdc_acm_1", USBD_SPEED_HS, 1);
-		if (err) { LOG_ERR("Failed to register cdc_acm_1 HS"); return NULL; }
-#if DT_NODE_EXISTS(DT_NODELABEL(cdc_acm_uart2))
-		err = usbd_register_class(&app_usbd, "cdc_acm_2", USBD_SPEED_HS, 1);
-		if (err) { LOG_ERR("Failed to register cdc_acm_2 HS"); return NULL; }
-#endif
-
-		app_fix_code_triple(&app_usbd, USBD_SPEED_HS);
-	}
-
 	/* doc configuration register start */
-	err = usbd_add_configuration(&app_usbd, USBD_SPEED_FS,
-				     &app_fs_config);
+	err = usbd_add_configuration(&app_usbd, USBD_SPEED_FS, &app_fs_config);
 	if (err) {
 		LOG_ERR("Failed to add Full-Speed configuration");
 		return NULL;
@@ -160,16 +119,27 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 
 	/* Register the USB classes in the order we want them to appear */
 	err = usbd_register_class(&app_usbd, "dap_func_0", USBD_SPEED_FS, 1);
-	if (err) { LOG_ERR("Failed to register dap_func_0 FS"); return NULL; }
+	if (err) {
+		LOG_ERR("Failed to register dap_func_0 FS (%d)", err);
+		return NULL;
+	}
 	err = usbd_register_class(&app_usbd, "cdc_acm_0", USBD_SPEED_FS, 1);
-	if (err) { LOG_ERR("Failed to register cdc_acm_0 FS"); return NULL; }
+	if (err) {
+		LOG_ERR("Failed to register cdc_acm_0 FS (%d)", err);
+		return NULL;
+	}
 	err = usbd_register_class(&app_usbd, "cdc_acm_1", USBD_SPEED_FS, 1);
-	if (err) { LOG_ERR("Failed to register cdc_acm_1 FS"); return NULL; }
+	if (err) {
+		LOG_ERR("Failed to register cdc_acm_1 FS (%d)", err);
+		return NULL;
+	}
 #if DT_NODE_EXISTS(DT_NODELABEL(cdc_acm_uart2))
 	err = usbd_register_class(&app_usbd, "cdc_acm_2", USBD_SPEED_FS, 1);
-	if (err) { LOG_ERR("Failed to register cdc_acm_2 FS"); return NULL; }
+	if (err) {
+		LOG_ERR("Failed to register cdc_acm_2 FS (%d)", err);
+		return NULL;
+	}
 #endif
-	/* doc functions register end */
 
 	app_fix_code_triple(&app_usbd, USBD_SPEED_FS);
 	usbd_self_powered(&app_usbd, attributes & USB_SCD_SELF_POWERED);
@@ -186,10 +156,6 @@ struct usbd_context *app_usbd_setup_device(usbd_msg_cb_t msg_cb)
 
 	/* Set USB version to 2.01 to enable BOS descriptor support */
 	(void)usbd_device_set_bcd_usb(&app_usbd, USBD_SPEED_FS, 0x0201);
-	if (USBD_SUPPORTS_HIGH_SPEED &&
-	    usbd_caps_speed(&app_usbd) == USBD_SPEED_HS) {
-		(void)usbd_device_set_bcd_usb(&app_usbd, USBD_SPEED_HS, 0x0201);
-	}
 
 #if CONFIG_APP_USBD_20_EXTENSION_DESC
 	err = usbd_add_descriptor(&app_usbd, &app_usbext);
